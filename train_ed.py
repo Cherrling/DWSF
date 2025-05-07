@@ -11,6 +11,12 @@ from utils.util import setup_seed, save_images, decoded_message_error_rate_messa
 from utils.dataset import *
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 setup_seed(100)
+from tqdm import tqdm
+
+from tensorboardX import SummaryWriter
+tb_logger_path = './tb_logger'
+writer = SummaryWriter(f"{tb_logger_path}/train{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}")
+
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Running code')
@@ -87,7 +93,8 @@ if __name__ == '__main__':
         encoder_decoder.decoder.train()
         discriminator.train()
         print("========training=============")
-        for batch_idx, batch_data in enumerate(train_loader):
+        # for batch_idx, batch_data in enumerate(train_loader):
+        for batch_idx, batch_data in tqdm(enumerate(train_loader), total=len(train_loader)):
             images = batch_data
             images = images.to(device)
             ori_images = images.clone().detach()
@@ -155,6 +162,19 @@ if __name__ == '__main__':
                         train_d_encoded_loss.item(), train_d_cover_loss.item(), train_loss.item(),
                         train_gen_loss.item(), train_encode_loss.item(),
                         train_mse_loss.item(), train_msssim_loss, train_decode_loss.item()))
+                writer.add_scalar('D_loss', train_d_encoded_loss.item() + train_d_cover_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_d_encoded_loss', train_d_encoded_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_d_cover_loss', train_d_cover_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_loss', train_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_gen_loss', train_gen_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_mse_loss', train_mse_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_msssim_loss', train_msssim_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_decode_loss', train_decode_loss.item(), epoch * len(train_loader) + batch_idx)
+                writer.add_scalar('train_encode_loss', train_encode_loss.item(), epoch * len(train_loader) + batch_idx)
+                
+                
+                
+                
 
         print('>>>>>>>Train Epoch: {} \tD_loss: = DisF:{} + DisT:{}\n\tEn_De_loss: {} = Gen:{} + En:{} + De:{}'.format(
             epoch, train_dis_lossF_tmp, train_dis_lossT_tmp,
@@ -220,6 +240,11 @@ if __name__ == '__main__':
                     print(decode_messages[0])
                     print('val loss:', val_loss, ' gen loss:', val_gen_loss, 'encode loss:', val_encode_loss,
                           'decode loss:', val_decode_loss)
+                    writer.add_scalar('val_loss', val_loss.item(), epoch * len(val_loader) + batch_idx_val)
+                    writer.add_scalar('val_gen_loss', val_gen_loss.item(), epoch * len(val_loader) + batch_idx_val)
+                    writer.add_scalar('encode loss', val_encode_loss.item(), epoch * len(val_loader) + batch_idx_val)
+                    writer.add_scalar('decode loss', val_decode_loss.item(), epoch * len(val_loader) + batch_idx_val)
+                    
 
                 # error rate
                 error_rate_bit_all += decoded_message_error_rate_bit_batch(messages, decode_messages)
@@ -241,6 +266,11 @@ if __name__ == '__main__':
             print('error_message: {}'.format(error_rate_message_all / val_count))
             print('psnr: {}'.format(psnr_all / val_count))
             print('ssim: {}'.format(ssim_all / val_count))
+            writer.add_scalar('val_loss', val_loss_tmp / val_count, epoch)
+            writer.add_scalar('error_bit', error_rate_bit_all / val_count, epoch)
+            writer.add_scalar('error_message', error_rate_message_all / val_count, epoch)
+            writer.add_scalar('psnr', psnr_all / val_count, epoch)
+            writer.add_scalar('ssim', ssim_all / val_count, epoch)
             torch.save(encoder_decoder.encoder.state_dict(), save_pth_path + '/encoder_{}.pth'.format(epoch))
             torch.save(encoder_decoder.decoder.state_dict(), save_pth_path + '/decoder_{}.pth'.format(epoch))
             torch.save(discriminator.state_dict(), save_pth_path + '/discriminator_{}.pth'.format(epoch))

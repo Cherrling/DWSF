@@ -1,0 +1,1 @@
+python train_ed.py --train_dataset_path /home/cherrling/code/DWSF/dataset/train_full --val_dataset_path /home/cherrling/code/DWSF/dataset/test_full --save_path models --batch_size 8
