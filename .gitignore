@@ -1,2 +1,7 @@
 dataset
-models
+ed_models
+genimgoutput
+genimgpth
+seg_models
+tb_logger
+*.pyc

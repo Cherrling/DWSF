@@ -7,7 +7,7 @@
 from torchvision import utils as vutils
 import numpy as np
 import torch
-
+from math import floor
 
 def setup_seed(seed):
     """
