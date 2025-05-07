@@ -61,8 +61,8 @@ if __name__ == '__main__':
     discriminator.to(device)
     val_noiser.to(device)
 
-    optimizer = torch.optim.Adamw(encoder_decoder.parameters(), lr=1e-4)
-    optimizer_dis = torch.optim.Adamw(discriminator.parameters(), lr=1e-4)
+    optimizer = torch.optim.AdamW(encoder_decoder.parameters(), lr=1e-4)
+    optimizer_dis = torch.optim.AdamW(discriminator.parameters(), lr=1e-4)
 
     mseloss = torch.nn.MSELoss().to(device)
     binaryloss = torch.nn.BCEWithLogitsLoss().to(device)
