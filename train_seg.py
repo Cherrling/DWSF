@@ -18,7 +18,7 @@ parser.add_argument('--H', type=int, default=512)
 parser.add_argument('--W', type=int, default=512)
 parser.add_argument('--start-epoch', default=0, type=int, help='manual epoch number (useful on restarts)')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='weight decay (default: 1e-4)')
-parser.add_argument('-optimtype', type=str, default='Adamw', help='SGD,Adam,Adamx,Adamw')
+parser.add_argument('-optimtype', type=str, default='AdamW', help='SGD,Adam,Adamx,AdamW')
 parser.add_argument('-lr_schedulertype', type=str, default='CosineAnnealingWarmRestarts', help='CosineAnnealingWarmRestarts,MultiStepLR,ReduceLROnPlateau,CyclicLR')
 parser.add_argument('--train_path', type=str, default='./')
 parser.add_argument('--val_path', type=str, default='./')
@@ -112,7 +112,7 @@ def main(args):
         optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     elif args.optimtype == 'Adamx':
         optimizer = torch.optim.Adamax(model.parameters(), args.lr, weight_decay=args.weight_decay)
-    elif args.optimtype == 'Adamw':
+    elif args.optimtype == 'AdamW':
         optimizer = torch.optim.AdamW(model.parameters(), args.lr, weight_decay=args.weight_decay)
 
     # select scheduler
