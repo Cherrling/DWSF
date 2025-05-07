@@ -46,7 +46,7 @@ train segmentation model
 python generate_segdata.py --img_path original_image_path --out_path watermarked_img_mask_path --weight_path encoder_decoder_pth_path
 
 # train segmentation mode
-python train_seg.py --train_path train_watermarked_img_mask_path --test_path test_watermarked_img_mask_path --output_path pth_output_path
+python train_seg.py --train_path train_watermarked_img_mask_path --val_path test_watermarked_img_mask_path --output_path pth_output_path
 ```
 
 ### evaluating
