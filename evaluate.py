@@ -16,11 +16,12 @@ from networks.models.Noiser import Noise
 from utils.util import *
 from utils.img import psnr_clip
 from utils.util import setup_seed, save_images
-from utils.seg import obtain_wm_blocks
+from utils.seg import obtain_wm_blocks, init
 from utils.crc import crc
 
 setup_seed(30)
 
+init(model_path='./seg_99.pth')
 
 def encode(encoder, images, messages, splitSize=128, inputSize=128, h_coor=[], w_coor=[], psnr=35):
     """
@@ -167,18 +168,19 @@ if __name__ == '__main__':
     discriminator = Discriminator()
 
     # attack list
-    noise_list = [
-                ["Identity()"], ["RandomJpegTest(50,100)"],  ["RandomGN(3,10)"],
-                ["RandomGF(3,8)"], ["RandomColor(0.5,1.5)"], ["RandomDropout(0.7,1)"],
-                ["RandomResize(0.5,2)"], ["RandomCrop(0.7,1)"],  ["RandomRotate(30)"],
-                ["RandomPadding(0,100)"], ["RandomOcclusion(0.25,0.5)"], ["RandomPIP(1,2)"],
-                ["Joint([RandomColor(0.5,1.5), RandomJpegTest(50,100)])"],
-                ["Joint([RandomCrop(0.7,1), RandomJpegTest(50,100)])"],
-                ["Joint([RandomCrop(0.7,1), RandomResize(0.5,2)])"],
-                ["Joint([RandomOcclusion(0.25,0.5), RandomJpegTest(50,100)])"],
-                ["Joint([RandomCrop(0.7,1), RandomResize(0.5,2), RandomJpegTest(50,100)])"],
-                ["Joint([RandomCrop(0.7,1),RandomOcclusion(0.25,0.5),RandomJpegTest(50,100)])"],
-                ]
+    # noise_list = [
+    #             ["Identity()"], ["RandomJpegTest(50,100)"],  ["RandomGN(3,10)"],
+    #             ["RandomGF(3,8)"], ["RandomColor(0.5,1.5)"], ["RandomDropout(0.7,1)"],
+    #             ["RandomResize(0.5,2)"], ["RandomCrop(0.7,1)"],  ["RandomRotate(30)"],
+    #             ["RandomPadding(0,100)"], ["RandomOcclusion(0.25,0.5)"], ["RandomPIP(1,2)"],
+    #             ["Joint([RandomColor(0.5,1.5), RandomJpegTest(50,100)])"],
+    #             ["Joint([RandomCrop(0.7,1), RandomJpegTest(50,100)])"],
+    #             ["Joint([RandomCrop(0.7,1), RandomResize(0.5,2)])"],
+    #             ["Joint([RandomOcclusion(0.25,0.5), RandomJpegTest(50,100)])"],
+    #             ["Joint([RandomCrop(0.7,1), RandomResize(0.5,2), RandomJpegTest(50,100)])"],
+    #             ["Joint([RandomCrop(0.7,1),RandomOcclusion(0.25,0.5),RandomJpegTest(50,100)])"],
+    #             ]
+    noise_list = [["Identity()"]]
     noise_list_bak = copy.deepcopy(noise_list)
     noise_layers = []
     for noise in noise_list:
@@ -276,12 +278,14 @@ if __name__ == '__main__':
             flag = crc_evaluate(torch.vstack([decode_messages, decode_messages_fusion]))
             bit_check_accuracy_adapt.append(flag)
 
-            psnr, ssim = image_quality_evalute(images, encoded_images)
-            psnr_all.append(psnr)
-            ssim_all.append(ssim)
+
+
+            # psnr, ssim = image_quality_evalute(images, encoded_images)
+            # psnr_all.append(psnr)
+            # ssim_all.append(ssim)
 
         print('========result:{}========'.format(noise_list_bak[i]))
-        print('psnr: {}\t ssim: {}\t len:{}'.format(np.mean(psnr_all), np.mean(ssim_all), len(psnr_all)))
+        # print('psnr: {}\t ssim: {}\t len:{}'.format(np.mean(psnr_all), np.mean(ssim_all), len(psnr_all)))
         print('MIN:','bit_acc: {}\t bit_check_acc: {}'.format(np.mean(bit_accuracy_min),  np.mean(bit_check_accuracy_min)))
         print('MEAN:','bit_acc: {}\t bit_check_acc: {}'.format(np.mean(bit_accuracy_mean), np.mean(bit_check_accuracy_mean)))
         print('FUSION:','bit_acc: {}\t bit_check_acc: {}'.format(np.mean(bit_accuracy_adapt), np.mean(bit_check_accuracy_adapt)))
