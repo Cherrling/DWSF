@@ -21,8 +21,8 @@ parser = argparse.ArgumentParser(description='DWSF watermark segmentation evalua
 parser.add_argument('--watermark_dir', type=str, required=True, help='Directory containing watermarked images')
 parser.add_argument('--mask_dir', type=str, required=True, help='Directory containing ground truth masks')
 parser.add_argument('--output_dir', type=str, required=True, help='Directory to save visualization results')
-parser.add_argument('--model_path', type=str, default='./seg_99.pth', help='Path to the segmentation model')
-parser.add_argument('--threshold', type=float, default=0.5, help='Threshold for binary segmentation')
+parser.add_argument('--model_path', type=str, required=True, help='Path to the segmentation model')
+parser.add_argument('--threshold', type=float, default=0.7, help='Threshold for binary segmentation')
 args = parser.parse_args()
 
 # 创建输出目录
@@ -44,6 +44,7 @@ transform = transforms.Compose([
 # 但我们可以在这里手动设置模型路径
 model_path = args.model_path
 
+init(model_path=model_path)
 
 # 获取文件列表
 watermark_files = sorted([f for f in os.listdir(args.watermark_dir) if f.endswith(('.jpg', '.png', '.jpeg', '.bmp'))])
