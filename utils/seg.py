@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import torch.nn.functional as F
 import math
+import os
 from networks.segmentation.model import U2NETP
 
 model = None
@@ -18,10 +19,19 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
 
-def init():
+def init(model_path=''):
     global model
+    if model_path == '':
+        # error
+        raise ValueError("Please provide the model path")
+    if os.path.exists(model_path):
+        print(f"Loading model from {model_path}")
+    else:
+        # error
+        raise FileNotFoundError(f"Model path {model_path} does not exist")
+    
     model = U2NETP(mode='eval').to(device)
-    checkpoint = torch.load('./seg_99.pth')
+    checkpoint = torch.load(model_path)
     # checkpoint = torch.load('./results/seg_checkpoint/seg.pth')
     model.load_state_dict(checkpoint['state_dict'])
     model.eval()
