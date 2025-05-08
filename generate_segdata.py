@@ -265,8 +265,8 @@ if __name__ == '__main__':
         ori_mask = np.zeros_like(en_mask)
 
         
-        # 在转换为numpy前先获取边缘区域
-        edge_masks = []
+        # 合并所有边缘掩码，避免多次处理
+        combined_edge_mask = torch.zeros(images.shape[2], images.shape[3])
         for i in range(len(h_coor)):
             x1 = h_coor[i] - splitSize // 2
             x2 = h_coor[i] + splitSize // 2
@@ -279,11 +279,11 @@ if __name__ == '__main__':
             ey1 = max(0, y1 - edge_width)
             ey2 = min(images.shape[3], y2 + edge_width)
             
-            # 记录内部区域
-            mask = torch.zeros(images.shape[2], images.shape[3])
-            mask[ex1:ex2, ey1:ey2] = 1
-            mask[x1:x2, y1:y2] = 0  # 排除中心区域
-            edge_masks.append(mask)
+            # 记录边缘区域(排除中心)
+            combined_edge_mask[ex1:ex2, ey1:ey2] = 1
+            combined_edge_mask[x1:x2, y1:y2] = 0  # 排除中心区域
+        # 转换为numpy一次
+        combined_mask_np = combined_edge_mask.numpy()
         
         images = (images.cpu().numpy() + 1) / 2 * 255
         images = np.transpose(images, (0, 2, 3, 1))[0]
@@ -291,13 +291,10 @@ if __name__ == '__main__':
         encoded_images = (encoded_images.cpu().numpy() + 1) / 2 * 255
         encoded_images = np.transpose(encoded_images, (0, 2, 3, 1))[0]
         
-        # 在像素空间应用极小的调整
-        for mask in edge_masks:
-            mask_np = mask.numpy()
-            # 边缘区+3，防溢出
-            encoded_images = encoded_images.astype(float)
-            for c in range(3):
-                encoded_images[:,:,c][mask_np > 0] = np.minimum(encoded_images[:,:,c][mask_np > 0] + 3, 255)
+        encoded_images = encoded_images.astype(float)
+        mask_3d = np.stack([combined_mask_np] * 3, axis=2)  # 扩展到3通道
+        encoded_images = np.where(mask_3d > 0, encoded_images + 3, encoded_images)
+        encoded_images = np.clip(encoded_images, 0, 255).astype(np.uint8)
             
         encoded_images = encoded_images.astype(np.uint8)
 
