@@ -14,3 +14,5 @@ eval_output
 eval_seg
 eval_split_seg
 *.pth
+genimg_tem
+*.tar
