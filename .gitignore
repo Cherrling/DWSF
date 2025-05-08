@@ -4,4 +4,13 @@ genimgoutput
 genimgpth
 seg_models
 tb_logger
+tb_seg
 *.pyc
+*.jpg
+*.png
+*.jpeg
+eval_imgs
+eval_output
+eval_seg
+eval_split_seg
+*.pth

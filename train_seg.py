@@ -7,6 +7,12 @@ from utils.dataset import *
 from utils.util import setup_seed
 from networks.segmentation.model import U2NETP
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+from tqdm import tqdm
+import time
+from tensorboardX import SummaryWriter
+tb_logger_path = './tb_seg'
+writer = SummaryWriter(f"{tb_logger_path}/train{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}")
+
 
 # Training settings
 parser = argparse.ArgumentParser(description='option')
@@ -62,7 +68,8 @@ def train_epoch(train_loader, model, optimizer, epoch):
     model.train()
     train_bce_loss = 0.
     train_iou_loss = 0.
-    for i, (image, target, index, _) in enumerate((train_loader)):
+    # for i, (image, target, index, _) in enumerate((train_loader)):
+    for i, (image, target, index, _) in enumerate(tqdm(train_loader)):
         image, target = image.cuda(), target.cuda()
         d0, d1, d2, d3, d4, d5, d6 = model(image)
         loss_bce = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, target)
@@ -74,26 +81,35 @@ def train_epoch(train_loader, model, optimizer, epoch):
         optimizer.step()
         train_bce_loss += loss_bce.item()
         train_iou_loss += loss_iou.item()
+        
+        if i % 100 == 0:
+            writer.add_scalar('train/bce_loss', loss_bce.item(), epoch * len(train_loader) + i)
+            writer.add_scalar('train/iou_loss', loss_iou.item(), epoch * len(train_loader) + i)
+            writer.add_scalar('train/loss', loss.item(), epoch * len(train_loader) + i)
 
     print("[Train]Epoch: {}, BCE loss: {}, ".format(epoch, train_bce_loss))
     print("[Train]Epoch: {}, IOU loss: {}, ".format(epoch, train_iou_loss))
     return None
 
 
-def testcheckpoint(test_loader, model):
+def testcheckpoint(test_loader, model, epoch=0):
     model.eval()
     val_bce_loss = 0.
     val_iou_loss = 0.
     with torch.no_grad():
-        for data, target,index,_ in test_loader:
+        # for data, target,index,_ in test_loader:
+        for data, target, index, _ in tqdm(test_loader):
             data, target = data.cuda(), target.cuda()
             d0, d1, d2, d3, d4, d5, d6 = model(data)
             loss_bce = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, target)
             loss_iou = muti_iou_loss_fusion(d0, d1, d2, d3, d4, d5, d6, target) * 0.1
             val_bce_loss += loss_bce.item()
             val_iou_loss += loss_iou.item()
-    print("[Val]Epoch: {}, BCE loss: {}, ".format(val_bce_loss))
-    print("[Val]Epoch: {}, IOU loss: {}, ".format(val_iou_loss))
+    
+    writer.add_scalar('val/bce_loss', val_bce_loss, epoch)
+    writer.add_scalar('val/iou_loss', val_iou_loss, epoch)
+    print("[Val]Epoch: {}, BCE loss: {}, ".format(epoch, val_bce_loss))
+    print("[Val]Epoch: {}, IOU loss: {}, ".format(epoch, val_iou_loss))
 
     return None
 
@@ -134,7 +150,7 @@ def main(args):
         train_epoch(train_loader, model, optimizer, epoch)
         scheduler.step()
 
-        testcheckpoint(val_loader, model)
+        testcheckpoint(val_loader, model, epoch)
 
         save_checkpoint({
             'epoch': epoch,
